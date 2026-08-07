@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAB A BITE — Lagos Street Kitchen, Order Online</title>
+<meta name="description" content="Order hot Nigerian food straight from your phone — jollof, suya, small chops and drinks. No app needed, pay with OPay or on delivery.">
+<meta name="theme-color" content="#1B1512">
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
+
+<!-- Open Graph (WhatsApp / Facebook link previews) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="GRAB A BITE — Lagos Street Kitchen">
+<meta property="og:description" content="Hot food, no queue. Order jollof, suya, small chops and drinks — straight to your door.">
+<meta property="og:image" content="images/jollofrice.jpeg">
+
+<!-- Twitter/X card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GRAB A BITE — Lagos Street Kitchen">
+<meta name="twitter:description" content="Hot food, no queue. Order straight from your phone.">
+<meta name="twitter:image" content="images/jollofrice.jpeg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ STORE STATUS BANNER ============ -->
+<div class="status-banner" id="statusBanner"></div>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">GAB</span>
+      <span class="brand-name">GRAB <em>A</em> BITE</span>
+    </div>
+    <nav class="header-nav">
+      <a href="#menu">Menu</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#about">Contact</a>
+    </nav>
+    <button class="cart-toggle" id="cartToggle" aria-label="Open order ticket">
+      <span class="cart-toggle-icon">🧾</span>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Lagos street kitchen · open till late</p>
+    <h1 class="hero-title">Hot food.<br>No queue.<br><span class="hero-accent">Grab a bite.</span></h1>
+    <p class="hero-sub">Order straight from your phone. We fire it up, you pay your way, and your ticket lands in our kitchen the second you hit send.</p>
+    <a href="#menu" class="btn btn-primary hero-cta">See the menu ↓</a>
+  </div>
+  <div class="hero-ticket" aria-hidden="true">
+    <div class="ticket-punch"></div>
+    <p class="ticket-line">1 × JOLLOF RICE</p>
+    <p class="ticket-line">1 × SUYA WRAP</p>
+    <p class="ticket-line">1 × ZOBO, CHILLED</p>
+    <p class="ticket-total">TOTAL — ₦6,200</p>
+    <p class="ticket-stamp">FIRING NOW 🔥</p>
+  </div>
+</section>
+
+<!-- ============ MENU ============ -->
+<main>
+<section class="menu-section" id="menu">
+  <div class="section-head">
+    <h2>The Menu</h2>
+    <p>Everything made to order. Tap a dish to add it to your ticket.</p>
+  </div>
+
+  <div class="menu-tabs" id="menuTabs">
+    <button class="menu-tab active" data-cat="mains">Mains</button>
+    <button class="menu-tab" data-cat="small-chops">Small Chops</button>
+    <button class="menu-tab" data-cat="drinks">Drinks</button>
+  </div>
+
+  <div class="menu-grid" id="menuGrid"></div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="how-section" id="how">
+  <div class="section-head">
+    <h2>How it works</h2>
+  </div>
+  <div class="how-steps">
+    <div class="how-step">
+      <span class="how-num">01</span>
+      <h3>Build your ticket</h3>
+      <p>Add whatever you're craving. Your ticket total updates as you go.</p>
+    </div>
+    <div class="how-step">
+      <span class="how-num">02</span>
+      <h3>Tell us where you are</h3>
+      <p>Drop your name, phone number, and delivery address at checkout.</p>
+    </div>
+    <div class="how-step">
+      <span class="how-num">03</span>
+      <h3>Pay your way</h3>
+      <p>Pay online right there, or choose pay-on-delivery — cash or transfer.</p>
+    </div>
+    <div class="how-step">
+      <span class="how-num">04</span>
+      <h3>We start cooking</h3>
+      <p>Your order pings us instantly on WhatsApp or email. No app, no wait.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVIEWS ============ -->
+<section class="reviews-section" id="reviews">
+  <div class="section-head">
+    <h2>What people are saying</h2>
+    <p>Real feedback from real bites.</p>
+  </div>
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-quote">"The jollof tastes like proper party jollof — smoky, not watery. Ordering was stress-free too."</p>
+      <p class="review-author">— Funmi A.</p>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-quote">"Asun was perfectly spiced and delivery was faster than I expected. Already recommended to my group chat."</p>
+      <p class="review-author">— Chuka O.</p>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★☆</div>
+      <p class="review-quote">"Suya wrap is now my go-to lunch order. Paying with OPay right on the site made it so easy."</p>
+      <p class="review-author">— Amaka N.</p>
+    </div>
+  </div>
+  <p class="review-disclaimer">★ Follow up on Reviews </p>
+</section>
+
+<!-- ============ ABOUT / CONTACT ============ -->
+<section class="about-section" id="about">
+  <div class="about-grid">
+    <div class="about-info">
+      <div class="section-head" style="text-align:left;">
+        <h2>Find us</h2>
+        <p>Questions, catering requests, or just want to say hi?</p>
+      </div>
+      <ul class="about-list">
+        <li><strong>Address</strong><span id="aboutAddress">[Add your restaurant address here]</span></li>
+        <li><strong>Phone / WhatsApp</strong><span id="aboutPhone"></span></li>
+        <li><strong>Email</strong><span id="aboutEmail"></span></li>
+      </ul>
+      <div class="about-hours">
+        <strong>Opening hours</strong>
+        <ul id="aboutHoursList"></ul>
+      </div>
+      <div class="about-socials">
+        <a href="#" target="_blank" rel="noopener">Instagram</a>
+        <a href="#" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </div>
+    <div class="about-map">
+      <iframe
+        title="GRAB A BITE location"
+        src="https://www.google.com/maps?q=Lagos,Nigeria&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <p>GRAB A BITE — made fresh, sent fast.</p>
+  <p class="footer-sub">Lagos street kitchen · <a href="#about">Contact us</a></p>
+</footer>
+
+<!-- ============ CART DRAWER ============ -->
+<div class="cart-overlay" id="cartOverlay"></div>
+<aside class="cart-drawer" id="cartDrawer" aria-label="Your order ticket">
+  <div class="cart-drawer-head">
+    <h2>Your Ticket</h2>
+    <button class="cart-close" id="cartClose" aria-label="Close">✕</button>
+  </div>
+
+  <div class="cart-items" id="cartItems">
+    <p class="cart-empty" id="cartEmpty">Your ticket is empty. Go grab a bite.</p>
+  </div>
+
+  <div class="cart-footer">
+    <p class="cart-min-notice" id="cartMinNotice"></p>
+    <div class="cart-row cart-subtotal">
+      <span>Subtotal</span>
+      <span id="cartSubtotal">₦0</span>
+    </div>
+    <div class="cart-row cart-delivery">
+      <span>Delivery</span>
+      <span id="cartDelivery">₦0</span>
+    </div>
+    <div class="cart-row cart-total">
+      <span>Total</span>
+      <span id="cartTotal">₦0</span>
+    </div>
+    <button class="btn btn-primary btn-block" id="checkoutBtn" disabled>Checkout</button>
+  </div>
+</aside>
+
+<!-- ============ CHECKOUT MODAL ============ -->
+<div class="modal-overlay" id="checkoutOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+    <button class="modal-close" id="checkoutClose" aria-label="Close">✕</button>
+
+    <div class="modal-step" id="stepDetails">
+      <h2 id="checkoutTitle">Where's this going?</h2>
+      <p class="modal-sub">We'll send your ticket straight to the kitchen with these details.</p>
+
+      <form id="detailsForm" novalidate>
+        <label class="field">
+          <span>Full name</span>
+          <input type="text" id="custName" placeholder="e.g. Ade Bello">
+          <span class="field-error" id="errName"></span>
+        </label>
+        <label class="field">
+          <span>Phone number</span>
+          <input type="tel" id="custPhone" placeholder="e.g. 0803 000 0000">
+          <span class="field-error" id="errPhone"></span>
+        </label>
+        <label class="field">
+          <span>Delivery address</span>
+          <textarea id="custAddress" placeholder="Street, area, landmark"></textarea>
+          <span class="field-error" id="errAddress"></span>
+        </label>
+        <label class="field">
+          <span>Delivery area</span>
+          <select id="custZone">
+            <option value="">Select your area…</option>
+          </select>
+          <span class="field-error" id="errZone"></span>
+          <p class="zone-note" id="zoneNote"></p>
+        </label>
+        <label class="field">
+          <span>Notes for the kitchen (optional)</span>
+          <textarea id="custNotes" placeholder="e.g. Less spicy, no onions"></textarea>
+        </label>
+
+        <div class="pay-choice">
+          <p class="field-label">How do you want to pay?</p>
+          <label class="pay-option">
+            <input type="radio" name="payMethod" value="online" checked>
+            <span>Pay with OPay</span>
+          </label>
+          <label class="pay-option">
+            <input type="radio" name="payMethod" value="delivery">
+            <span>Pay on delivery (cash or transfer)</span>
+          </label>
+        </div>
+
+        <div class="send-choice">
+          <p class="field-label">Send the order to the kitchen via</p>
+          <label class="pay-option">
+            <input type="radio" name="sendMethod" value="whatsapp" checked>
+            <span>WhatsApp</span>
+          </label>
+          <label class="pay-option">
+            <input type="radio" name="sendMethod" value="email">
+            <span>Email</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="detailsSubmit">Continue — <span id="modalTotal">₦0</span></button>
+      </form>
+    </div>
+
+    <div class="modal-step" id="stepConfirmation" style="display:none;">
+      <div class="confirm-icon">✓</div>
+      <h2>Order sent!</h2>
+      <p class="modal-sub" id="confirmSub">Your ticket is on its way to the kitchen. We'll confirm with you shortly.</p>
+
+      <div class="confirm-summary" id="confirmSummary"></div>
+
+      <p class="confirm-note">Didn't see WhatsApp or your email app open? Check for a pop-up blocker, or reach us directly.</p>
+
+      <button type="button" class="btn btn-primary btn-block" id="confirmDoneBtn">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
