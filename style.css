@@ -127,6 +127,12 @@ input,textarea{font-family:inherit;}
   font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:0.68rem;
   width:19px;height:19px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
+  transition:transform .2s ease, opacity .2s ease;
+}
+.cart-count.is-zero{
+  opacity:0;
+  transform:scale(0.6);
+  pointer-events:none;
 }
 
 /* ============ HERO ============ */

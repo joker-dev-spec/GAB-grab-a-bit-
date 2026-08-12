@@ -67,6 +67,11 @@ const CONFIG = {
     { name: "Ajara (market area)", fee: 700 },
     { name: "Outside Lagos", fee: null } // null = "we'll call to confirm", pay-on-delivery only
   ],
+  // Optional review links — leave blank and the corresponding link in the
+  // Reviews section will be hidden. Set to a full https:// URL.
+  reviewsGoogleUrl: "", // e.g. "https://maps.google.com/?cid=1234567890"
+  reviewsInstagramUrl: "",
+  reviewsFacebookUrl: "",
   openingHours: {
     0: { open:"10:00", close:"22:00" }, // Sunday
     1: { open:"09:00", close:"22:00" }, // Monday
@@ -115,8 +120,14 @@ const MENU = [
 
 /* ---------------- STATE ---------------- */
 let cart = JSON.parse(localStorage.getItem("gab_cart") || "{}");
-// Safety: drop any cart items saved before photos were added (missing "img")
-Object.keys(cart).forEach(id => { if(!cart[id].img) delete cart[id]; });
+// Safety: drop any cart items saved before the menu was populated, or whose id
+// no longer exists. (Image is looked up live from MENU on render — no need to
+// store it in the cart, which kept stale paths when image files were renamed.)
+Object.keys(cart).forEach(id => {
+  if(!MENU.find(d => d.id === id)) { delete cart[id]; return; }
+  // Strip legacy fields that are no longer used.
+  if(cart[id].img) delete cart[id].img;
+});
 let activeCat = "mains";
 
 /* ---------------- HELPERS ---------------- */
@@ -165,6 +176,19 @@ function renderStatusBanner(){
     banner.textContent = `We're closed right now — ${todayHoursText()}. You can browse, but ordering opens back up when we do.`;
     banner.className = "status-banner closed";
   }
+  updateTicketStamp();
+}
+
+function updateTicketStamp(){
+  const stamp = document.getElementById("ticketStamp");
+  if(!stamp) return;
+  if(isOpenNow()){
+    stamp.textContent = "FIRING NOW 🔥";
+    stamp.style.color = "var(--chili)";
+  } else {
+    stamp.textContent = "KITCHEN CLOSED";
+    stamp.style.color = "var(--ink-soft)";
+  }
 }
 
 /* ---------------- ABOUT / CONTACT ---------------- */
@@ -173,10 +197,15 @@ const DAY_NAMES = { 0:"Sunday",1:"Monday",2:"Tuesday",3:"Wednesday",4:"Thursday"
 
 function renderAboutSection(){
   document.getElementById("aboutAddress").textContent = CONFIG.restaurantAddress;
-
-  const phoneDisplay = "+" + CONFIG.ownerPhoneWhatsApp;
+  const phoneRaw = CONFIG.ownerPhoneWhatsApp; // e.g. "2348031234567" — last 10 digits are the local number
+  const phoneLocal = phoneRaw.replace(/^234/, "0");
+  const phoneIntl = "+" + phoneRaw;
+  const phoneTel = phoneRaw; // tel: links accept digits with the country code, no +
   document.getElementById("aboutPhone").innerHTML =
-    `<a href="https://wa.me/${CONFIG.ownerPhoneWhatsApp}" target="_blank" rel="noopener">${phoneDisplay}</a>`;
+    `<a href="tel:${phoneTel}">${phoneLocal}</a>` +
+    ` <span style="color:rgba(255,248,237,0.4);">·</span> ` +
+    `<a href="https://wa.me/${phoneRaw}" target="_blank" rel="noopener">WhatsApp</a>` +
+    `<span style="color:rgba(255,248,237,0.55);font-size:0.82rem;display:block;margin-top:2px;">International: ${phoneIntl}</span>`;
 
   document.getElementById("aboutEmail").innerHTML =
     `<a href="mailto:${CONFIG.ownerEmail}">${CONFIG.ownerEmail}</a>`;
@@ -193,6 +222,35 @@ function renderAboutSection(){
   const mapFrame = document.querySelector(".about-map iframe");
   if(mapFrame){
     mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(CONFIG.restaurantAddress)}&output=embed`;
+  }
+
+  // Social / reviews links — only show if a URL is configured.
+  const socialMap = {
+    instagram: CONFIG.reviewsInstagramUrl,
+    facebook:  CONFIG.reviewsFacebookUrl,
+    google:    CONFIG.reviewsGoogleUrl
+  };
+  document.querySelectorAll("#aboutSocials a[data-social]").forEach(a => {
+    const url = socialMap[a.dataset.social];
+    if(url){
+      a.href = url;
+      a.style.display = "";
+    } else {
+      a.removeAttribute("href");
+      a.style.display = "none";
+    }
+  });
+
+  // "Leave a review" link after the reviews grid.
+  const disclaimer = document.getElementById("reviewDisclaimer");
+  const reviewLink = document.getElementById("reviewLink");
+  if(disclaimer && reviewLink){
+    if(CONFIG.reviewsGoogleUrl){
+      reviewLink.href = CONFIG.reviewsGoogleUrl;
+      disclaimer.style.display = "";
+    } else {
+      disclaimer.style.display = "none";
+    }
   }
 }
 
@@ -236,7 +294,17 @@ function validateForm(){
   const phoneOk = showFieldError("custPhone","errPhone", validatePhone(document.getElementById("custPhone").value.trim()));
   const addressOk = showFieldError("custAddress","errAddress", validateAddress(document.getElementById("custAddress").value.trim()));
   const zoneOk = showFieldError("custZone","errZone", validateZone(document.getElementById("custZone").value));
-  return nameOk && phoneOk && addressOk && zoneOk;
+  if(!(nameOk && phoneOk && addressOk && zoneOk)){
+    // Scroll the first invalid field into view so the customer actually sees
+    // the error on mobile (modals can be taller than the viewport).
+    const firstInvalid = document.querySelector(".field input.invalid, .field textarea.invalid, .field select.invalid");
+    if(firstInvalid){
+      firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstInvalid.focus({ preventScroll: true });
+    }
+    return false;
+  }
+  return true;
 }
 
 // Clear a field's error as soon as the person starts fixing it
@@ -300,11 +368,17 @@ menuGrid.addEventListener("click", e=>{
 /* ---------------- CART LOGIC ---------------- */
 function addToCart(id){
   const dish = MENU.find(d=>d.id===id);
-  if(!cart[id]) cart[id] = { name:dish.name, price:dish.price, img:dish.img, qty:0 };
+  if(!dish) return;
+  if(!cart[id]) cart[id] = { name:dish.name, price:dish.price, qty:0 };
   cart[id].qty++;
   saveCart();
   renderCart();
   showToast(`${dish.name} added to your ticket`);
+}
+
+function dishImage(id){
+  const dish = MENU.find(d=>d.id===id);
+  return dish ? dish.img : "";
 }
 function changeQty(id, delta){
   if(!cart[id]) return;
@@ -331,7 +405,9 @@ const modalTotalEl = document.getElementById("modalTotal");
 
 function renderCart(){
   const ids = Object.keys(cart);
-  cartCountEl.textContent = cartCount();
+  const count = cartCount();
+  cartCountEl.textContent = count;
+  cartCountEl.classList.toggle("is-zero", count === 0);
 
   cartItemsEl.querySelectorAll(".cart-item").forEach(el=>el.remove());
   cartEmptyEl.style.display = ids.length ? "none" : "block";
@@ -341,7 +417,7 @@ function renderCart(){
     const row = document.createElement("div");
     row.className = "cart-item";
     row.innerHTML = `
-      <img class="cart-item-img" src="${item.img}" alt="${item.name}">
+      <img class="cart-item-img" src="${dishImage(id)}" alt="${item.name}" onerror="this.style.visibility='hidden'">
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-price">${naira(item.price)} each</div>
@@ -444,6 +520,9 @@ document.getElementById("detailsForm").addEventListener("submit", e=>{
 /* ---------------- DELIVERY ZONES ---------------- */
 function renderZoneOptions(){
   const select = document.getElementById("custZone");
+  // Guard against double-render (e.g. on hot-reload or if init runs twice).
+  if(select.dataset.rendered === "1") return;
+  select.dataset.rendered = "1";
   CONFIG.deliveryZones.forEach((zone, i)=>{
     const opt = document.createElement("option");
     opt.value = i;
@@ -499,7 +578,13 @@ function showOpayQrStep(order){
   confirmBox.innerHTML = `
     <p class="modal-sub">Scan this with your OPay app to pay <strong>${naira(total)}</strong>, then confirm below.</p>
     <div class="opay-qr-box">
-      <img src="${CONFIG.opayQrImage}" alt="OPay QR code for ${CONFIG.opayAccountName}" class="opay-qr-img">
+      <img src="${CONFIG.opayQrImage}" alt="OPay QR code for ${CONFIG.opayAccountName}" class="opay-qr-img"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <p class="opay-qr-fallback-promo" style="display:none;margin-top:14px;padding:14px;background:var(--paper);border-radius:10px;border:1.5px dashed var(--chili);">
+        QR code failed to load. Send payment manually to:<br>
+        <strong style="font-size:1.05rem;display:inline-block;margin-top:6px;">${CONFIG.opayAccountNumber}</strong><br>
+        <span style="color:var(--ink-soft);font-size:0.85rem;">${CONFIG.opayAccountName}</span>
+      </p>
       <p class="opay-qr-name">${CONFIG.opayAccountName}</p>
       <p class="opay-qr-fallback">Can't scan? Send to OPay account <strong>${CONFIG.opayAccountNumber}</strong></p>
     </div>
@@ -577,18 +662,51 @@ function finalizeOrder(order, paymentNote){
     const url = `https://wa.me/${CONFIG.ownerPhoneWhatsApp}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
   } else {
+    // mailto: silently does nothing on many mobile browsers if no mail client
+    // is configured — the customer would see "Order sent!" and their ticket
+    // would vanish. After firing the mailto, check if focus stayed in our tab
+    // and fall back to copying the order to the clipboard with a visible toast.
     const subject = encodeURIComponent(`New order from ${order.name} — ${CONFIG.restaurantName}`);
     const body = encodeURIComponent(message);
-    window.location.href = `mailto:${CONFIG.ownerEmail}?subject=${subject}&body=${body}`;
+    const mailto = `mailto:${CONFIG.ownerEmail}?subject=${subject}&body=${body}`;
+    const beforeHash = location.hash;
+    window.location.href = mailto;
+    setTimeout(() => {
+      if(location.hash === beforeHash){
+        // Still here — mailto didn't take us anywhere. Try clipboard.
+        copyOrderToClipboard(message, order, itemsSnapshot, subtotal, delivery, total, paymentNote);
+      } else {
+        // mailto fired, proceed normally.
+        afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
+      }
+    }, 600);
+    return; // both branches handle dispatch — don't fall through to the post-if call
   }
 
+  afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
+}
+
+function afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote){
   logOrderToSheet(order, itemsSnapshot, delivery, total, paymentNote);
-
   showConfirmationStep(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
-
   cart = {};
   saveCart();
   renderCart();
+}
+
+function copyOrderToClipboard(message, order, itemsSnapshot, subtotal, delivery, total, paymentNote){
+  const fallback = (text) => {
+    // Last-resort: prompt() so the customer can long-press to copy.
+    window.prompt("Your order didn't send (no email app detected). Copy this and send it to us manually:", text);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(message).then(() => {
+      showToast("No email app found — order copied to clipboard. Paste it to us manually.");
+    }).catch(() => fallback(message));
+  } else {
+    fallback(message);
+  }
+  afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
 }
 
 function showConfirmationStep(order, items, subtotal, delivery, total, paymentNote){
@@ -661,3 +779,18 @@ renderStatusBanner();
 renderAboutSection();
 renderZoneOptions();
 setInterval(renderStatusBanner, 60000); // recheck every minute in case we cross open/close time
+
+/* ---------------- ORDER LOG SANITY CHECK ---------------- */
+// Lightweight startup check that the configured Google Form is reachable.
+// We do a GET to the public "viewform" URL (not the POST endpoint) so it
+// never creates a blank row. If it's down, the owner sees a console warning
+// instead of orders silently disappearing into the void.
+(function pingOrderLog(){
+  if(!CONFIG.orderLog || !CONFIG.orderLog.formActionUrl) return;
+  const viewUrl = CONFIG.orderLog.formActionUrl
+    .replace("/formResponse", "/viewform")
+    .replace("/formResponse?", "/viewform?");
+  fetch(viewUrl, { method: "GET", mode: "no-cors" })
+    .then(() => console.info("[GAB] Order log endpoint reachable:", viewUrl))
+    .catch(err => console.warn("[GAB] Order log endpoint may be unreachable — orders will still send to the kitchen via WhatsApp/email, but they won't be saved to your Sheet until this is fixed.", err));
+})();

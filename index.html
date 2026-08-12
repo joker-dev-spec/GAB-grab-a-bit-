@@ -59,13 +59,13 @@
     <p class="hero-sub">Order straight from your phone. We fire it up, you pay your way, and your ticket lands in our kitchen the second you hit send.</p>
     <a href="#menu" class="btn btn-primary hero-cta">See the menu ↓</a>
   </div>
-  <div class="hero-ticket" aria-hidden="true">
+  <div class="hero-ticket" aria-label="Sample order ticket showing a Jollof Rice, a Suya Wrap and a chilled Zobo for a total of six thousand two hundred naira.">
     <div class="ticket-punch"></div>
     <p class="ticket-line">1 × JOLLOF RICE</p>
     <p class="ticket-line">1 × SUYA WRAP</p>
     <p class="ticket-line">1 × ZOBO, CHILLED</p>
     <p class="ticket-total">TOTAL — ₦6,200</p>
-    <p class="ticket-stamp">FIRING NOW 🔥</p>
+    <p class="ticket-stamp" id="ticketStamp">FIRING NOW 🔥</p>
   </div>
 </section>
 
@@ -138,7 +138,7 @@
       <p class="review-author">— Amaka N.</p>
     </div>
   </div>
-  <p class="review-disclaimer">★ Follow up on Reviews </p>
+  <p class="review-disclaimer" id="reviewDisclaimer" style="display:none;">★ Enjoyed your order? <a href="#" id="reviewLink" target="_blank" rel="noopener">Leave us a review →</a></p>
 </section>
 
 <!-- ============ ABOUT / CONTACT ============ -->
@@ -158,9 +158,10 @@
         <strong>Opening hours</strong>
         <ul id="aboutHoursList"></ul>
       </div>
-      <div class="about-socials">
-        <a href="#" target="_blank" rel="noopener">Instagram</a>
-        <a href="#" target="_blank" rel="noopener">Facebook</a>
+      <div class="about-socials" id="aboutSocials">
+        <a href="#" target="_blank" rel="noopener" data-social="instagram" style="display:none;">Instagram</a>
+        <a href="#" target="_blank" rel="noopener" data-social="facebook" style="display:none;">Facebook</a>
+        <a href="#" target="_blank" rel="noopener" data-social="google" style="display:none;">Google Reviews</a>
       </div>
     </div>
     <div class="about-map">
@@ -228,7 +229,7 @@
         </label>
         <label class="field">
           <span>Phone number</span>
-          <input type="tel" id="custPhone" placeholder="e.g. 0803 000 0000">
+          <input type="tel" id="custPhone" inputmode="tel" placeholder="e.g. 0803 000 0000">
           <span class="field-error" id="errPhone"></span>
         </label>
         <label class="field">
