@@ -110,7 +110,7 @@
     <div class="how-step">
       <span class="how-num">04</span>
       <h3>We start cooking</h3>
-      <p>Your order pings us instantly on WhatsApp or email. No app, no wait.</p>
+      <p>Your order pings us instantly on WhatsApp. No app, no wait.</p>
     </div>
   </div>
 </section>
@@ -262,16 +262,8 @@
           </label>
         </div>
 
-        <div class="send-choice">
-          <p class="field-label">Send the order to the kitchen via</p>
-          <label class="pay-option">
-            <input type="radio" name="sendMethod" value="whatsapp" checked>
-            <span>WhatsApp</span>
-          </label>
-          <label class="pay-option">
-            <input type="radio" name="sendMethod" value="email">
-            <span>Email</span>
-          </label>
+        <div class="send-choice" style="display:none;">
+          <input type="hidden" name="sendMethod" value="whatsapp">
         </div>
 
         <button type="submit" class="btn btn-primary btn-block" id="detailsSubmit">Continue — <span id="modalTotal">₦0</span></button>
@@ -282,10 +274,11 @@
       <div class="confirm-icon">✓</div>
       <h2>Order sent!</h2>
       <p class="modal-sub" id="confirmSub">Your ticket is on its way to the kitchen. We'll confirm with you shortly.</p>
+      <div class="confirm-meta" id="confirmMeta" style="text-align:center;font-size:0.82rem;color:var(--ink-soft);margin-bottom:14px;font-family:'IBM Plex Mono',monospace;"></div>
 
       <div class="confirm-summary" id="confirmSummary"></div>
 
-      <p class="confirm-note">Didn't see WhatsApp or your email app open? Check for a pop-up blocker, or reach us directly.</p>
+      <p class="confirm-note">Didn't see WhatsApp open? Check for a pop-up blocker, or reach us directly.</p>
 
       <button type="button" class="btn btn-primary btn-block" id="confirmDoneBtn">Done</button>
     </div>
@@ -294,6 +287,14 @@
 
 <div class="toast" id="toast"></div>
 
+<noscript>
+  <div style="background:#1B1512;color:#FFF8ED;padding:20px 24px;text-align:center;font-family:sans-serif;border-radius:14px;margin:40px 20px;">
+    <p style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">JavaScript is required to use this site.</p>
+    <p style="font-size:0.92rem;opacity:0.8;">Please enable JavaScript in your browser, or message us directly on
+      <a href="https://wa.me/2347043930307" style="color:#F2A93B;">WhatsApp</a>
+      to place your order.</p>
+  </div>
+</noscript>
 <script src="script.js"></script>
 </body>
 </html>

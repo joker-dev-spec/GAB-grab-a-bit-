@@ -493,7 +493,7 @@ input,textarea{font-family:inherit;}
 .field-error.show{display:block;}
 
 .field-label{font-size:0.85rem;font-weight:600;margin-top:22px;margin-bottom:8px;}
-.pay-choice,.send-choice{margin-top:6px;}
+.pay-choice{margin-top:6px;}
 .pay-option{
   display:flex;align-items:center;gap:10px;
   border:1.5px solid var(--line);border-radius:10px;
@@ -528,6 +528,8 @@ input,textarea{font-family:inherit;}
   letter-spacing:0.02em;
 }
 #opayConfirmBox .btn-primary{margin-top:22px;}
+.opay-qr-fallback{display:none;font-size:0.88rem;color:var(--ink-soft);margin-top:10px;}
+.opay-qr-fallback.show{display:block;}
 
 /* ---- Order confirmation step ---- */
 .confirm-icon{

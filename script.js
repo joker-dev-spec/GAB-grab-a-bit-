@@ -6,8 +6,13 @@
    1. ownerPhoneWhatsApp — your WhatsApp number in international
       format, digits only, NO plus sign and NO leading zero.
       e.g. Nigerian number 0803 123 4567 -> "2348031234567"
+      Orders open as WhatsApp messages to this number — this is
+      the only channel that receives the ticket itself.
 
-   2. ownerEmail — the email address orders should land in.
+   2. ownerEmail — shown in the Contact section as an email link
+      (customers can also reach you directly by mail). Orders are
+      NOT sent by email any more — that path was removed to keep
+      the checkout to one step.
 
    3. opayQrImage / opayAccountName — your OPay "Receive Money" QR
       code (already dropped in as opay-qr.jpg) and the account name
@@ -73,13 +78,13 @@ const CONFIG = {
   reviewsInstagramUrl: "",
   reviewsFacebookUrl: "",
   openingHours: {
-    0: { open:"10:00", close:"22:00" }, // Sunday
-    1: { open:"09:00", close:"22:00" }, // Monday
-    2: { open:"09:00", close:"22:00" }, // Tuesday
-    3: { open:"09:00", close:"22:00" }, // Wednesday
-    4: { open:"09:00", close:"22:00" }, // Thursday
-    5: { open:"09:00", close:"23:00" }, // Friday
-    6: { open:"09:00", close:"23:00" }  // Saturday
+    0: null,                          // Sunday — closed
+    1: { open:"08:00", close:"22:00" }, // Monday
+    2: { open:"08:00", close:"22:00" }, // Tuesday
+    3: { open:"08:00", close:"22:00" }, // Wednesday
+    4: { open:"08:00", close:"22:00" }, // Thursday
+    5: { open:"08:00", close:"23:00" }, // Friday
+    6: { open:"08:00", close:"23:00" }  // Saturday
   },
   orderLog: {
     formActionUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdukrIRns6ERya0fBaB4fXws3f1-aN7ruEVvY39ch1cetTHOw/formResponse",
@@ -119,7 +124,15 @@ const MENU = [
 ];
 
 /* ---------------- STATE ---------------- */
-let cart = JSON.parse(localStorage.getItem("gab_cart") || "{}");
+// Defensive parse: if localStorage ever throws (private mode, quota, corrupted
+// JSON, etc.) fall back to an empty cart instead of halting the whole script.
+let cart = {};
+try {
+  cart = JSON.parse(localStorage.getItem("gab_cart") || "{}") || {};
+} catch(err){
+  console.warn("[GAB] Couldn't read saved cart, starting fresh:", err);
+  cart = {};
+}
 // Safety: drop any cart items saved before the menu was populated, or whose id
 // no longer exists. (Image is looked up live from MENU on render — no need to
 // store it in the cart, which kept stale paths when image files were renamed.)
@@ -464,9 +477,16 @@ cartItemsEl.addEventListener("click", e=>{
 const cartDrawer = document.getElementById("cartDrawer");
 const cartOverlay = document.getElementById("cartOverlay");
 
-function openCart(){ cartDrawer.classList.add("open"); cartOverlay.classList.add("open"); }
-function closeCart(){ cartDrawer.classList.remove("open"); cartOverlay.classList.remove("open"); }
-
+function openCart(){
+  cartDrawer.classList.add("open");
+  cartOverlay.classList.add("open");
+  trapFocus(cartDrawer);
+}
+function closeCart(){
+  cartDrawer.classList.remove("open");
+  cartOverlay.classList.remove("open");
+  releaseFocus();
+}
 document.getElementById("cartToggle").addEventListener("click", openCart);
 document.getElementById("cartClose").addEventListener("click", closeCart);
 cartOverlay.addEventListener("click", closeCart);
@@ -481,9 +501,11 @@ document.getElementById("checkoutBtn").addEventListener("click", ()=>{
   }
   closeCart();
   checkoutOverlay.classList.add("open");
+  trapFocus(checkoutOverlay.querySelector(".modal"));
 });
 document.getElementById("checkoutClose").addEventListener("click", ()=>{
   checkoutOverlay.classList.remove("open");
+  releaseFocus();
 });
 
 document.getElementById("detailsForm").addEventListener("submit", e=>{
@@ -502,13 +524,14 @@ document.getElementById("detailsForm").addEventListener("submit", e=>{
   const zoneIndex = document.getElementById("custZone").value;
   const zone = CONFIG.deliveryZones[zoneIndex];
   let payMethod = document.querySelector('input[name="payMethod"]:checked').value;
-  const sendMethod = document.querySelector('input[name="sendMethod"]:checked').value;
+  const sendMethod = "whatsapp";
 
   // Zones with no fixed fee (fee: null) can't be charged online yet —
   // force pay-on-delivery so the amount can be confirmed by phone first.
   if(zone.fee === null) payMethod = "delivery";
 
-  const order = { name, phone, address, notes, payMethod, sendMethod, zoneName: zone.name, deliveryFee: zone.fee };
+  const ref = "GAB-" + Math.random().toString(36).slice(2,7).toUpperCase();
+  const order = { name, phone, address, notes, payMethod, sendMethod, zoneName: zone.name, deliveryFee: zone.fee, ref };
 
   if(payMethod === "online"){
     payWithOpay(order);
@@ -579,7 +602,7 @@ function showOpayQrStep(order){
     <p class="modal-sub">Scan this with your OPay app to pay <strong>${naira(total)}</strong>, then confirm below.</p>
     <div class="opay-qr-box">
       <img src="${CONFIG.opayQrImage}" alt="OPay QR code for ${CONFIG.opayAccountName}" class="opay-qr-img"
-           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block'; this.parentNode.querySelector('.opay-qr-fallback').classList.add('show');">
       <p class="opay-qr-fallback-promo" style="display:none;margin-top:14px;padding:14px;background:var(--paper);border-radius:10px;border:1.5px dashed var(--chili);">
         QR code failed to load. Send payment manually to:<br>
         <strong style="font-size:1.05rem;display:inline-block;margin-top:6px;">${CONFIG.opayAccountNumber}</strong><br>
@@ -639,7 +662,8 @@ function buildOrderMessage(order, paymentNote){
   const deliveryText = order.deliveryFee === null ? "To be confirmed by phone" : naira(order.deliveryFee);
   const total = subtotal + (order.deliveryFee || 0);
 
-  let lines = `NEW ORDER — ${CONFIG.restaurantName}\n\n`;
+  let lines = `NEW ORDER — ${CONFIG.restaurantName}\n`;
+  lines += `Ref: ${order.ref}\n\n`;
   lines += `Customer: ${order.name}\nPhone: ${order.phone}\nAddress: ${order.address}\nArea: ${order.zoneName}\n`;
   if(order.notes) lines += `Notes: ${order.notes}\n`;
   lines += `\nItems:\n`;
@@ -658,30 +682,8 @@ function finalizeOrder(order, paymentNote){
   const total = subtotal + (delivery || 0);
   const itemsSnapshot = Object.values(cart);
 
-  if(order.sendMethod === "whatsapp"){
-    const url = `https://wa.me/${CONFIG.ownerPhoneWhatsApp}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
-  } else {
-    // mailto: silently does nothing on many mobile browsers if no mail client
-    // is configured — the customer would see "Order sent!" and their ticket
-    // would vanish. After firing the mailto, check if focus stayed in our tab
-    // and fall back to copying the order to the clipboard with a visible toast.
-    const subject = encodeURIComponent(`New order from ${order.name} — ${CONFIG.restaurantName}`);
-    const body = encodeURIComponent(message);
-    const mailto = `mailto:${CONFIG.ownerEmail}?subject=${subject}&body=${body}`;
-    const beforeHash = location.hash;
-    window.location.href = mailto;
-    setTimeout(() => {
-      if(location.hash === beforeHash){
-        // Still here — mailto didn't take us anywhere. Try clipboard.
-        copyOrderToClipboard(message, order, itemsSnapshot, subtotal, delivery, total, paymentNote);
-      } else {
-        // mailto fired, proceed normally.
-        afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
-      }
-    }, 600);
-    return; // both branches handle dispatch — don't fall through to the post-if call
-  }
+  const url = `https://wa.me/${CONFIG.ownerPhoneWhatsApp}?text=${encodeURIComponent(message)}`;
+  window.open(url, "_blank");
 
   afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
 }
@@ -694,21 +696,6 @@ function afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, p
   renderCart();
 }
 
-function copyOrderToClipboard(message, order, itemsSnapshot, subtotal, delivery, total, paymentNote){
-  const fallback = (text) => {
-    // Last-resort: prompt() so the customer can long-press to copy.
-    window.prompt("Your order didn't send (no email app detected). Copy this and send it to us manually:", text);
-  };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(message).then(() => {
-      showToast("No email app found — order copied to clipboard. Paste it to us manually.");
-    }).catch(() => fallback(message));
-  } else {
-    fallback(message);
-  }
-  afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
-}
-
 function showConfirmationStep(order, items, subtotal, delivery, total, paymentNote){
   const stepDetails = document.getElementById("stepDetails");
   const stepConfirmation = document.getElementById("stepConfirmation");
@@ -719,9 +706,15 @@ function showConfirmationStep(order, items, subtotal, delivery, total, paymentNo
   stepConfirmation.style.display = "block";
 
   document.getElementById("confirmSub").textContent =
-    order.sendMethod === "whatsapp"
-      ? "Your ticket just opened in WhatsApp — hit send there to reach our kitchen."
-      : "Your ticket just opened in your email app — hit send there to reach our kitchen.";
+    "Your ticket just opened in WhatsApp — hit send there to reach our kitchen. We'll confirm with you shortly.";
+
+  const now = new Date();
+  const ts = now.toLocaleString("en-NG", {
+    day:"numeric", month:"short", year:"numeric",
+    hour:"numeric", minute:"2-digit", hour12:true, timeZone:"Africa/Lagos"
+  });
+  const metaEl = document.getElementById("confirmMeta");
+  metaEl.textContent = `${order.ref}  ·  ${ts}`;
 
   const deliveryText = delivery === null ? "To be confirmed" : naira(delivery);
   const totalText = delivery === null ? naira(subtotal) + " + delivery" : naira(total);
@@ -738,9 +731,14 @@ function showConfirmationStep(order, items, subtotal, delivery, total, paymentNo
 
 document.getElementById("confirmDoneBtn").addEventListener("click", ()=>{
   checkoutOverlay.classList.remove("open");
+  releaseFocus();
   resetCheckoutModal();
 });
-document.getElementById("checkoutClose").addEventListener("click", resetCheckoutModal);
+document.getElementById("checkoutClose").addEventListener("click", ()=>{
+  checkoutOverlay.classList.remove("open");
+  releaseFocus();
+  resetCheckoutModal();
+});
 
 function resetCheckoutModal(){
   document.getElementById("detailsForm").reset();
@@ -762,6 +760,64 @@ function resetCheckoutModal(){
   if(opayBox) opayBox.remove();
 }
 
+/* ---------------- FOCUS TRAP / ESCAPE KEY ---------------- */
+// Lightweight a11y helper: while an overlay is open, Escape closes it and
+// Tab/Shift+Tab cycle between its focusable children so keyboard/AT users
+// don't tab out into the page behind the modal/drawer.
+let trapContainer = null;
+let trapPrevFocus = null;
+
+function focusableIn(root){
+  return Array.from(root.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null || el === document.activeElement);
+}
+
+function trapFocus(container){
+  if(!container) return;
+  if(trapContainer){
+    releaseFocus();
+  }
+  trapContainer = container;
+  trapPrevFocus = document.activeElement;
+  const handleKey = (e) => {
+    if(e.key === "Escape"){
+      // Find the closest overlay currently open and close it.
+      if(cartDrawer.classList.contains("open")) closeCart();
+      else if(checkoutOverlay.classList.contains("open")) checkoutOverlay.classList.remove("open");
+      else releaseFocus();
+      return;
+    }
+    if(e.key !== "Tab" || !trapContainer) return;
+    const items = focusableIn(trapContainer);
+    if(!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if(e.shiftKey && document.activeElement === first){
+      e.preventDefault(); last.focus();
+    } else if(!e.shiftKey && document.activeElement === last){
+      e.preventDefault(); first.focus();
+    }
+  };
+  container._trapHandler = handleKey;
+  document.addEventListener("keydown", handleKey, true);
+  // Move focus to the first focusable element so screen readers announce the panel.
+  const items = focusableIn(container);
+  if(items.length) items[0].focus({ preventScroll: true });
+}
+
+function releaseFocus(){
+  if(trapContainer && trapContainer._trapHandler){
+    document.removeEventListener("keydown", trapContainer._trapHandler, true);
+    delete trapContainer._trapHandler;
+  }
+  trapContainer = null;
+  if(trapPrevFocus && typeof trapPrevFocus.focus === "function"){
+    trapPrevFocus.focus({ preventScroll: true });
+  }
+trapPrevFocus = null;
+}
+
 /* ---------------- TOAST ---------------- */
 let toastTimer;
 function showToast(msg){
@@ -771,6 +827,27 @@ function showToast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>toast.classList.remove("show"), 2600);
 }
+
+/* ---------------- SECTION HASH SYNC ---------------- */
+// Update the URL hash as the user scrolls past each section, so the
+// back-button / sharing a link with a deep anchor works correctly.
+(function initHashSync(){
+  const sections = document.querySelectorAll("main section[id]");
+  if(!sections.length || !("IntersectionObserver" in window)) return;
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const id = entry.target.getAttribute("id");
+        if(id && location.hash !== "#" + id){
+          history.replaceState(null, "", "#" + id);
+        }
+      }
+    });
+  }, { rootMargin: "-30% 0px -60% 0px", threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+})();
 
 /* ---------------- INIT ---------------- */
 renderMenu();
@@ -792,5 +869,5 @@ setInterval(renderStatusBanner, 60000); // recheck every minute in case we cross
     .replace("/formResponse?", "/viewform?");
   fetch(viewUrl, { method: "GET", mode: "no-cors" })
     .then(() => console.info("[GAB] Order log endpoint reachable:", viewUrl))
-    .catch(err => console.warn("[GAB] Order log endpoint may be unreachable — orders will still send to the kitchen via WhatsApp/email, but they won't be saved to your Sheet until this is fixed.", err));
+    .catch(err => console.warn("[GAB] Order log endpoint may be unreachable — orders will still send to the kitchen via WhatsApp, but they won't be saved to your Sheet until this is fixed.", err));
 })();
