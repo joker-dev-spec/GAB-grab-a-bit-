@@ -137,11 +137,13 @@ try {
 // no longer exists. (Image is looked up live from MENU on render — no need to
 // store it in the cart, which kept stale paths when image files were renamed.)
 Object.keys(cart).forEach(id => {
-  if(!MENU.find(d => d.id === id)) { delete cart[id]; return; }
+  const entry = cart[id];
+  if(!MENU.find(d => d.id === id) || !entry || typeof entry !== "object") { delete cart[id]; return; }
   // Strip legacy fields that are no longer used.
-  if(cart[id].img) delete cart[id].img;
+  if(entry.img) delete entry.img;
 });
 let activeCat = "mains";
+let lastOrderUrl = ""; // keeps the wa.me link so customers can retry if the popup was blocked
 
 /* ---------------- HELPERS ---------------- */
 const naira = n => "₦" + n.toLocaleString("en-NG");
@@ -274,8 +276,11 @@ function validateName(value){
 }
 function validatePhone(value){
   const digits = value.replace(/[\s-]/g,"");
-  const okLocal = /^0[789][01]\d{8}$/.test(digits);
-  const okIntl = /^\+?234[789][01]\d{8}$/.test(digits);
+  // Nigerian mobile numbers start 07, 08 or 09 (10 digits total) — the
+  // third digit varies by network (0805/0806/0809/0905 etc.), so accept
+  // anything in 070–099 rather than a fixed prefix list.
+  const okLocal = /^0[789]\d{9}$/.test(digits);
+  const okIntl = /^\+?234[789]\d{9}$/.test(digits);
   if(!okLocal && !okIntl) return "Enter a valid Nigerian phone number, e.g. 0803 000 0000.";
   return "";
 }
@@ -503,10 +508,13 @@ document.getElementById("checkoutBtn").addEventListener("click", ()=>{
   checkoutOverlay.classList.add("open");
   trapFocus(checkoutOverlay.querySelector(".modal"));
 });
-document.getElementById("checkoutClose").addEventListener("click", ()=>{
+
+function closeCheckout(){
   checkoutOverlay.classList.remove("open");
   releaseFocus();
-});
+  resetCheckoutModal();
+}
+document.getElementById("checkoutClose").addEventListener("click", closeCheckout);
 
 document.getElementById("detailsForm").addEventListener("submit", e=>{
   e.preventDefault();
@@ -524,14 +532,13 @@ document.getElementById("detailsForm").addEventListener("submit", e=>{
   const zoneIndex = document.getElementById("custZone").value;
   const zone = CONFIG.deliveryZones[zoneIndex];
   let payMethod = document.querySelector('input[name="payMethod"]:checked').value;
-  const sendMethod = "whatsapp";
 
   // Zones with no fixed fee (fee: null) can't be charged online yet —
   // force pay-on-delivery so the amount can be confirmed by phone first.
   if(zone.fee === null) payMethod = "delivery";
 
   const ref = "GAB-" + Math.random().toString(36).slice(2,7).toUpperCase();
-  const order = { name, phone, address, notes, payMethod, sendMethod, zoneName: zone.name, deliveryFee: zone.fee, ref };
+  const order = { name, phone, address, notes, payMethod, zoneName: zone.name, deliveryFee: zone.fee, ref };
 
   if(payMethod === "online"){
     payWithOpay(order);
@@ -683,6 +690,7 @@ function finalizeOrder(order, paymentNote){
   const itemsSnapshot = Object.values(cart);
 
   const url = `https://wa.me/${CONFIG.ownerPhoneWhatsApp}?text=${encodeURIComponent(message)}`;
+  lastOrderUrl = url;
   window.open(url, "_blank");
 
   afterOrderDispatched(order, itemsSnapshot, subtotal, delivery, total, paymentNote);
@@ -716,6 +724,9 @@ function showConfirmationStep(order, items, subtotal, delivery, total, paymentNo
   const metaEl = document.getElementById("confirmMeta");
   metaEl.textContent = `${order.ref}  ·  ${ts}`;
 
+  const reopenLink = document.getElementById("confirmWhatsAppLink");
+  if(reopenLink && lastOrderUrl) reopenLink.href = lastOrderUrl;
+
   const deliveryText = delivery === null ? "To be confirmed" : naira(delivery);
   const totalText = delivery === null ? naira(subtotal) + " + delivery" : naira(total);
 
@@ -729,16 +740,7 @@ function showConfirmationStep(order, items, subtotal, delivery, total, paymentNo
   document.getElementById("confirmSummary").innerHTML = html;
 }
 
-document.getElementById("confirmDoneBtn").addEventListener("click", ()=>{
-  checkoutOverlay.classList.remove("open");
-  releaseFocus();
-  resetCheckoutModal();
-});
-document.getElementById("checkoutClose").addEventListener("click", ()=>{
-  checkoutOverlay.classList.remove("open");
-  releaseFocus();
-  resetCheckoutModal();
-});
+document.getElementById("confirmDoneBtn").addEventListener("click", closeCheckout);
 
 function resetCheckoutModal(){
   document.getElementById("detailsForm").reset();
@@ -784,7 +786,7 @@ function trapFocus(container){
     if(e.key === "Escape"){
       // Find the closest overlay currently open and close it.
       if(cartDrawer.classList.contains("open")) closeCart();
-      else if(checkoutOverlay.classList.contains("open")) checkoutOverlay.classList.remove("open");
+      else if(checkoutOverlay.classList.contains("open")) closeCheckout();
       else releaseFocus();
       return;
     }
@@ -815,7 +817,7 @@ function releaseFocus(){
   if(trapPrevFocus && typeof trapPrevFocus.focus === "function"){
     trapPrevFocus.focus({ preventScroll: true });
   }
-trapPrevFocus = null;
+  trapPrevFocus = null;
 }
 
 /* ---------------- TOAST ---------------- */

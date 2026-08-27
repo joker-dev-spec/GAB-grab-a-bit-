@@ -59,12 +59,12 @@
     <p class="hero-sub">Order straight from your phone. We fire it up, you pay your way, and your ticket lands in our kitchen the second you hit send.</p>
     <a href="#menu" class="btn btn-primary hero-cta">See the menu ↓</a>
   </div>
-  <div class="hero-ticket" aria-label="Sample order ticket showing a Jollof Rice, a Suya Wrap and a chilled Zobo for a total of six thousand two hundred naira.">
+  <div class="hero-ticket" aria-label="Sample order ticket showing a Jollof Rice, a Suya Wrap and a chilled Zobo for a total of nine thousand naira.">
     <div class="ticket-punch"></div>
     <p class="ticket-line">1 × JOLLOF RICE</p>
     <p class="ticket-line">1 × SUYA WRAP</p>
     <p class="ticket-line">1 × ZOBO, CHILLED</p>
-    <p class="ticket-total">TOTAL — ₦6,200</p>
+    <p class="ticket-total">TOTAL — ₦9,000</p>
     <p class="ticket-stamp" id="ticketStamp">FIRING NOW 🔥</p>
   </div>
 </section>
@@ -262,10 +262,6 @@
           </label>
         </div>
 
-        <div class="send-choice" style="display:none;">
-          <input type="hidden" name="sendMethod" value="whatsapp">
-        </div>
-
         <button type="submit" class="btn btn-primary btn-block" id="detailsSubmit">Continue — <span id="modalTotal">₦0</span></button>
       </form>
     </div>
@@ -278,14 +274,14 @@
 
       <div class="confirm-summary" id="confirmSummary"></div>
 
-      <p class="confirm-note">Didn't see WhatsApp open? Check for a pop-up blocker, or reach us directly.</p>
+      <p class="confirm-note">Didn't see WhatsApp open? Check for a pop-up blocker, or <a id="confirmWhatsAppLink" href="#" target="_blank" rel="noopener" class="confirm-reopen">open the chat again here</a> — your ticket is ready to send.</p>
 
       <button type="button" class="btn btn-primary btn-block" id="confirmDoneBtn">Done</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <noscript>
   <div style="background:#1B1512;color:#FFF8ED;padding:20px 24px;text-align:center;font-family:sans-serif;border-radius:14px;margin:40px 20px;">

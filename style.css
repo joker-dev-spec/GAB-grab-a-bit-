@@ -563,6 +563,7 @@ input,textarea{font-family:inherit;}
 .confirm-note{
   margin-top:16px;font-size:0.8rem;color:var(--ink-soft);line-height:1.5;
 }
+.confirm-note .confirm-reopen{color:var(--chili);font-weight:600;text-decoration:underline;}
 
 /* ============ TOAST ============ */
 .toast{
